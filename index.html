@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Солфеджио 1-Синф</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; font-size: 24px; margin-bottom: 5px; }
+        .subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
+        .question-box {
+            background: #f8f9fa;
+            border: 2px dashed #007bff;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn-opt {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-opt:hover { background: #218838; transform: scale(1.02); }
+        #result-msg {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 25px;
+        }
+        .score-board {
+            font-size: 14px;
+            color: #555;
+            margin-top: 15px;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="game-card">
+        <h1>🎵 Солфеджио: 1-Синф</h1>
+        <div class="subtitle">Мусиқа дунёсига хуш келибсиз!</div>
+        <div class="question-box" id="question">Савол юкланмоқда...</div>
+        <div class="options-grid" id="options"></div>
+        <div id="result-msg"></div>
+        <div class="score-board">Балл: <span id="score">0</span> / <span id="total">0</span></div>
+    </div>
+
+    <div class="card hidden" id="access-denied">
+        <h2 style="color: #dc3545;">⛔ Кириш чекланган</h2>
+        <p>Бу ўйинни ўйнаш учун ботдан сотиб олинган махсус кодни киритишингиз керак!</p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const questions = [
+            { q: "Скрипка калитида 1-чизиқда қайси нота жойлашган?", options: ["До", "Ре", "Ми", "Фа"], answer: "Ми" },
+            { q: "Биринчи қўшимча чизиқда қайси нота жойлашган?", options: ["До", "Ми", "Соль", "Ля"], answer: "До" },
+            { q: "‘Forte’ (Форте) атамаси нимани англатади?", options: ["Секин", "Баланд / Жарангдор", "Тез", "Оҳиста"], answer: "Баланд / Жарангдор" },
+            { q: "‘Piano’ (Пиано) мусиқий атамаси маъноси нима?", options: ["Паст / Оҳиста", "Тез", "Жуда баланд", "Шошмасдан"], answer: "Паст / Оҳиста" },
+            { q: "Мусиқада нечта асосий нота бор?", options: ["5 та", "6 та", "7 та", "8 та"], answer: "7 та" }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+
+        document.getElementById("total").innerText = questions.length;
+
+        function loadQuestion() {
+            if (currentQ < questions.length) {
+                const qData = questions[currentQ];
+                document.getElementById("question").innerText = (currentQ + 1) + ". " + qData.q;
+                const optionsDiv = document.getElementById("options");
+                optionsDiv.innerHTML = "";
+                document.getElementById("result-msg").innerText = "";
+
+                qData.options.forEach(opt => {
+                    const btn = document.createElement("button");
+                    btn.innerText = opt;
+                    btn.className = "btn-opt";
+                    btn.onclick = () => checkAnswer(opt, qData.answer);
+                    optionsDiv.appendChild(btn);
+                });
+            } else {
+                document.getElementById("game-card").innerHTML = `
+                    <h2>🎉 Баракалла!</h2>
+                    <p style="font-size: 20px;">Сиз синовдан муваффақиятли ўтдингиз!</p>
+                    <h3>Якуний балл: ${score} / ${questions.length}</h3>
+                    <button class="btn-opt" style="width: 100%;" onclick="location.reload()">Қайта ўйнаш 🔄</button>
+                `;
+            }
+        }
+
+        function checkAnswer(selected, correct) {
+            const res = document.getElementById("result-msg");
+            if (selected === correct) {
+                res.innerText = "Тўғри! 👏";
+                res.style.color = "#28a745";
+                score++;
+                document.getElementById("score").innerText = score;
+                currentQ++;
+                setTimeout(loadQuestion, 1200);
+            } else {
+                res.innerText = "Нотўғри, қайта уриниб кўринг! ❌";
+                res.style.color = "#dc3545";
+            }
+        }
+
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            loadQuestion();
+        } else {
+            document.getElementById("game-card").classList.add("hidden");
+            document.getElementById("access-denied").classList.remove("hidden");
+        }
+    </script>
+</body>
+</html>

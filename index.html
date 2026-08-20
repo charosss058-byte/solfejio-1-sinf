@@ -1,304 +1,599 @@
 
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Солфеджио 1-Синф</title>
 
-const GAME_NAME = "solfejio-1-sinf";
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-export default {
-    async fetch(request, env) {
-
-        // CORS
-        const corsHeaders = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type"
-        };
-
-        // OPTIONS
-        if (request.method === "OPTIONS") {
-            return new Response(null, {
-                status: 204,
-                headers: corsHeaders
-            });
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
-        // GET — server tekshiruvi
-        if (request.method === "GET") {
-            return new Response(
-                JSON.stringify({
-                    ok: true,
-                    message: "Solfejio license server ishlayapti"
-                }),
-                {
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type": "application/json"
-                    }
-                }
-            );
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
         }
 
-        // Faqat POST
-        if (request.method !== "POST") {
-            return new Response(
-                JSON.stringify({
-                    ok: false,
-                    error: "Method not allowed"
-                }),
-                {
-                    status: 405,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type": "application/json"
-                    }
-                }
-            );
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 5px;
         }
 
-        try {
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
 
-            // Request body
-            const body = await request.json();
+        .question-box {
+            background: #f8f9fa;
+            border: 2px dashed #007bff;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
 
-            const initData = body?.initData;
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
 
-            if (!initData) {
-                return new Response(
-                    JSON.stringify({
-                        ok: false,
-                        access: false,
-                        error: "initData yuborilmadi"
-                    }),
-                    {
-                        status: 400,
-                        headers: {
-                            ...corsHeaders,
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-            }
+        .btn-opt {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-            // BOT TOKEN kerak
-            const botToken = env.BOT_TOKEN;
+        .btn-opt:hover {
+            background: #218838;
+            transform: scale(1.02);
+        }
 
-            if (!botToken) {
-                console.error("BOT_TOKEN secret topilmadi");
+        .btn-opt:disabled {
+            opacity: 0.7;
+            cursor: default;
+            transform: none;
+        }
 
-                return new Response(
-                    JSON.stringify({
-                        ok: false,
-                        access: false,
-                        error: "Server konfiguratsiyasi tugallanmagan"
-                    }),
-                    {
-                        status: 500,
-                        headers: {
-                            ...corsHeaders,
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-            }
+        #result-msg {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 25px;
+        }
 
-            // Telegram initData ni tekshirish
-            const params = new URLSearchParams(initData);
+        .score-board {
+            font-size: 14px;
+            color: #555;
+            margin-top: 15px;
+        }
 
-            const receivedHash = params.get("hash");
+        .hidden {
+            display: none;
+        }
 
-            if (!receivedHash) {
-                return new Response(
-                    JSON.stringify({
-                        ok: false,
-                        access: false,
-                        error: "Telegram hash topilmadi"
-                    }),
-                    {
-                        status: 401,
-                        headers: {
-                            ...corsHeaders,
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-            }
+        .loading {
+            text-align: center;
+            padding: 30px;
+        }
+    </style>
+</head>
 
-            // hash ni data-check-string ichidan olib tashlaymiz
-            params.delete("hash");
+<body>
 
-            // Telegram qoidasi:
-            // barcha fieldlarni alphabetic tartibda joylaymiz
-            const dataCheckString = [...params.entries()]
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([key, value]) => `${key}=${value}`)
-                .join("\n");
+<div class="card" id="loading-card">
+    <div class="loading">
+        <h2>⏳ Текширилмоқда...</h2>
+        <p>Илтимос, бироз кутиб туринг.</p>
+    </div>
+</div>
 
-            // Secret key
-            const secretKey = await crypto.subtle.importKey(
-                "raw",
-                new TextEncoder().encode("WebAppData"),
-                {
-                    name: "HMAC",
-                    hash: "SHA-256"
+<div class="card hidden" id="game-card">
+
+    <h1>🎵 Солфеджио: 1-Синф</h1>
+
+    <div class="subtitle">
+        Мусиқа дунёсига хуш келибсиз!
+    </div>
+
+    <div class="question-box" id="question">
+        Савол юкланмоқда...
+    </div>
+
+    <div class="options-grid" id="options"></div>
+
+    <div id="result-msg"></div>
+
+    <div class="score-board">
+        Балл:
+        <span id="score">0</span>
+        /
+        <span id="total">0</span>
+    </div>
+
+</div>
+
+<div class="card hidden" id="access-denied">
+
+    <h2 style="color:#dc3545;">
+        🔒 Кириш чекланган
+    </h2>
+
+    <p>
+        Бу ўйиндан фойдаланиш учун махсус рухсат керак.
+    </p>
+
+    <p style="font-size:14px;color:#777;">
+        Рухсат бот орқали берилган бўлиши керак.
+    </p>
+
+</div>
+
+<script>
+
+const tg = window.Telegram.WebApp;
+
+tg.expand();
+
+const user = tg.initDataUnsafe?.user;
+
+if (user) {
+    console.log("Telegram User ID:", user.id);
+    console.log("Telegram Name:", user.first_name);
+}
+
+
+/* =========================================
+   LICENSE / ACCESS TEKSHIRUVI
+========================================= */
+
+async function checkLicense() {
+
+    try {
+
+        if (!tg.initData) {
+
+            console.log("Telegram initData mavjud emas.");
+
+            return false;
+        }
+
+        const response = await fetch(
+            "https://solfejio-license.charosss058.workers.dev/",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
                 },
-                false,
-                ["sign"]
-            );
 
-            const secretKeyBytes =
-                await crypto.subtle.sign(
-                    "HMAC",
-                    secretKey,
-                    new TextEncoder().encode(botToken)
-                );
-
-            // Data hash
-            const dataKey = await crypto.subtle.importKey(
-                "raw",
-                secretKeyBytes,
-                {
-                    name: "HMAC",
-                    hash: "SHA-256"
-                },
-                false,
-                ["sign"]
-            );
-
-            const calculatedHashBytes =
-                await crypto.subtle.sign(
-                    "HMAC",
-                    dataKey,
-                    new TextEncoder().encode(dataCheckString)
-                );
-
-            // ArrayBuffer -> hex
-            const calculatedHash =
-                [...new Uint8Array(calculatedHashBytes)]
-                    .map(b => b.toString(16).padStart(2, "0"))
-                    .join("");
-
-            // Hash tekshirish
-            if (calculatedHash !== receivedHash) {
-
-                console.warn("Telegram hash noto'g'ri");
-
-                return new Response(
-                    JSON.stringify({
-                        ok: false,
-                        access: false,
-                        error: "Telegram ma'lumotlari tasdiqlanmadi"
-                    }),
-                    {
-                        status: 401,
-                        headers: {
-                            ...corsHeaders,
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
+                body: JSON.stringify({
+                    initData: tg.initData
+                })
             }
+        );
 
-            // User ma'lumotini olish
-            const userString = params.get("user");
-
-            if (!userString) {
-                return new Response(
-                    JSON.stringify({
-                        ok: false,
-                        access: false,
-                        error: "Telegram user topilmadi"
-                    }),
-                    {
-                        status: 401,
-                        headers: {
-                            ...corsHeaders,
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-            }
-
-            const telegramUser = JSON.parse(userString);
-
-            const telegramId = String(telegramUser.id);
-
-            console.log("Telegram User ID:", telegramId);
-
-            // D1 dan litsenziyani tekshirish
-            const license = await env.DB
-                .prepare(`
-                    SELECT
-                        id,
-                        telegram_id,
-                        game,
-                        access,
-                        created_at
-                    FROM users
-                    WHERE telegram_id = ?
-                      AND game = ?
-                    LIMIT 1
-                `)
-                .bind(telegramId, GAME_NAME)
-                .first();
-
-            // Foydalanuvchi topilmadi
-            if (!license) {
-
-                return new Response(
-                    JSON.stringify({
-                        ok: true,
-                        access: false,
-                        telegram_id: telegramId,
-                        message: "Bu Telegram akkaunt uchun litsenziya topilmadi"
-                    }),
-                    {
-                        headers: {
-                            ...corsHeaders,
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-            }
-
-            // access tekshirish
-            const hasAccess = Number(license.access) === 1;
-
-            return new Response(
-                JSON.stringify({
-                    ok: true,
-                    access: hasAccess,
-                    telegram_id: telegramId,
-                    game: license.game,
-                    message: hasAccess
-                        ? "Kirishga ruxsat berildi"
-                        : "Kirishga ruxsat berilmagan"
-                }),
-                {
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type": "application/json"
-                    }
-                }
+        if (!response.ok) {
+            console.error(
+                "License server xatosi:",
+                response.status
             );
 
-        } catch (error) {
-
-            console.error("Worker error:", error);
-
-            return new Response(
-                JSON.stringify({
-                    ok: false,
-                    access: false,
-                    error: "Server xatosi"
-                }),
-                {
-                    status: 500,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type": "application/json"
-                    }
-                }
-            );
+            return false;
         }
+
+        const result = await response.json();
+
+        console.log("License:", result);
+
+        return result.ok === true && result.access === true;
+
+    } catch (error) {
+
+        console.error(
+            "License tekshirishda xato:",
+            error
+        );
+
+        return false;
     }
-};
-     
-             
+}
+
+
+/* =========================================
+   SAVOLLAR
+========================================= */
+
+const questions = [
+
+    {
+        q: "Скрипка калитида 1-чизиқда қайси нота жойлашган?",
+        options: ["До", "Ре", "Ми", "Фа"],
+        answer: "Ми"
+    },
+
+    {
+        q: "Биринчи қўшимча чизиқда қайси нота жойлашган?",
+        options: ["До", "Ми", "Соль", "Ля"],
+        answer: "До"
+    },
+
+    {
+        q: "‘Forte’ (Форте) атамаси нимани англатади?",
+        options: [
+            "Секин",
+            "Баланд / Жарангдор",
+            "Тез",
+            "Оҳиста"
+        ],
+        answer: "Баланд / Жарангдор"
+    },
+
+    {
+        q: "‘Piano’ (Пиано) мусиқий атамаси маъноси нима?",
+        options: [
+            "Паст / Оҳиста",
+            "Тез",
+            "Жуда баланд",
+            "Шошмасдан"
+        ],
+        answer: "Паст / Оҳиста"
+    },
+
+    {
+        q: "Мусиқада нечта асосий нота бор?",
+        options: [
+            "5 та",
+            "6 та",
+            "7 та",
+            "8 та"
+        ],
+        answer: "7 та"
+    }
+
+];
+
+
+/* =========================================
+   O'YIN O'ZGARUVCHILARI
+========================================= */
+
+let currentQ = 0;
+let score = 0;
+let answerLocked = false;
+
+document.getElementById("total").innerText =
+    questions.length;
+
+
+/* =========================================
+   TO'G'RI JAVOB OVOZI
+========================================= */
+
+function playCorrectSound() {
+
+    const AudioContext =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+    if (!AudioContext) return;
+
+    const audioContext =
+        new AudioContext();
+
+    const oscillator =
+        audioContext.createOscillator();
+
+    const gainNode =
+        audioContext.createGain();
+
+    oscillator.type = "sine";
+
+    oscillator.frequency.setValueAtTime(
+        660,
+        audioContext.currentTime
+    );
+
+    oscillator.frequency.setValueAtTime(
+        880,
+        audioContext.currentTime + 0.12
+    );
+
+    gainNode.gain.setValueAtTime(
+        0.15,
+        audioContext.currentTime
+    );
+
+    gainNode.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + 0.4
+    );
+
+    oscillator.connect(gainNode);
+
+    gainNode.connect(
+        audioContext.destination
+    );
+
+    oscillator.start();
+
+    oscillator.stop(
+        audioContext.currentTime + 0.4
+    );
+}
+
+
+/* =========================================
+   NOTO'G'RI JAVOB OVOZI
+========================================= */
+
+function playWrongSound() {
+
+    const AudioContext =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+    if (!AudioContext) return;
+
+    const audioContext =
+        new AudioContext();
+
+    const oscillator =
+        audioContext.createOscillator();
+
+    const gainNode =
+        audioContext.createGain();
+
+    oscillator.type = "sine";
+
+    oscillator.frequency.setValueAtTime(
+        330,
+        audioContext.currentTime
+    );
+
+    oscillator.frequency.setValueAtTime(
+        220,
+        audioContext.currentTime + 0.15
+    );
+
+    gainNode.gain.setValueAtTime(
+        0.12,
+        audioContext.currentTime
+    );
+
+    gainNode.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + 0.35
+    );
+
+    oscillator.connect(gainNode);
+
+    gainNode.connect(
+        audioContext.destination
+    );
+
+    oscillator.start();
+
+    oscillator.stop(
+        audioContext.currentTime + 0.35
+    );
+}
+
+
+/* =========================================
+   SAVOLNI YUKLASH
+========================================= */
+
+function loadQuestion() {
+
+    if (currentQ >= questions.length) {
+
+        finishGame();
+
+        return;
+    }
+
+    answerLocked = false;
+
+    const qData =
+        questions[currentQ];
+
+    document.getElementById("question")
+        .innerText =
+        (currentQ + 1) +
+        ". " +
+        qData.q;
+
+    const optionsDiv =
+        document.getElementById("options");
+
+    optionsDiv.innerHTML = "";
+
+    const resultMsg =
+        document.getElementById("result-msg");
+
+    resultMsg.innerText = "";
+
+    qData.options.forEach(
+        function(opt) {
+
+            const btn =
+                document.createElement("button");
+
+            btn.innerText = opt;
+
+            btn.className =
+                "btn-opt";
+
+            btn.onclick =
+                function() {
+
+                    checkAnswer(
+                        opt,
+                        qData.answer
+                    );
+
+                };
+
+            optionsDiv.appendChild(btn);
+        }
+    );
+}
+
+
+/* =========================================
+   JAVOBNI TEKSHIRISH
+========================================= */
+
+function checkAnswer(
+    selected,
+    correct
+) {
+
+    if (answerLocked) return;
+
+    const resultMsg =
+        document.getElementById(
+            "result-msg"
+        );
+
+    if (selected === correct) {
+
+        answerLocked = true;
+
+        playCorrectSound();
+
+        resultMsg.innerText =
+            "Тўғри! 👏";
+
+        resultMsg.style.color =
+            "#28a745";
+
+        score++;
+
+        document.getElementById(
+            "score"
+        ).innerText = score;
+
+        currentQ++;
+
+        setTimeout(
+            loadQuestion,
+            1000
+        );
+
+    } else {
+
+        playWrongSound();
+
+        resultMsg.innerText =
+            "Нотўғри, қайта уриниб кўринг! ❌";
+
+        resultMsg.style.color =
+            "#dc3545";
+    }
+}
+
+
+/* =========================================
+   O'YIN TUGASHI
+========================================= */
+
+function finishGame() {
+
+    document.getElementById(
+        "game-card"
+    ).innerHTML = `
+
+        <h2>🎉 Баракалла!</h2>
+
+        <p style="font-size:20px;">
+            Сиз синовдан муваффақиятли ўтдингиз!
+        </p>
+
+        <h3>
+            Якуний балл:
+            ${score} / ${questions.length}
+        </h3>
+
+        <button
+            class="btn-opt"
+            style="width:100%;"
+            onclick="location.reload()"
+        >
+            Қайта ўйнаш 🔄
+        </button>
+    `;
+}
+
+
+/* =========================================
+   O'YINNI BOSHLASH
+========================================= */
+
+async function startGame() {
+
+    const hasAccess =
+        await checkLicense();
+
+    document.getElementById(
+        "loading-card"
+    ).classList.add("hidden");
+
+
+    if (!hasAccess) {
+
+        document.getElementById(
+            "access-denied"
+        ).classList.remove("hidden");
+
+        return;
+    }
+
+
+    document.getElementById(
+        "game-card"
+    ).classList.remove("hidden");
+
+    loadQuestion();
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+startGame();
+
+</script>
+
+</body>
+</html>

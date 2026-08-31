@@ -1,1 +1,1504 @@
    
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Солфеджио 1-Синф</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+
+            font-family:
+                "Segoe UI",
+                Tahoma,
+                Geneva,
+                Verdana,
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #a1c4fd 0%,
+                    #c2e9fb 100%
+                );
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 460px;
+
+            background: white;
+
+            border-radius: 24px;
+
+            padding: 25px;
+
+            box-shadow:
+                0 15px 40px
+                rgba(0, 0, 0, 0.15);
+
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* =========================
+           LOADING
+        ========================= */
+
+        .loading-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .loading-title {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .loading-text {
+            color: #777;
+            font-size: 14px;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .game-icon {
+            font-size: 48px;
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            color: #263238;
+            font-size: 25px;
+            margin: 5px 0;
+        }
+
+        .subtitle {
+            color: #78909c;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* =========================
+           USER
+        ========================= */
+
+        .user-box {
+            background: #f1f8ff;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 15px;
+
+            color: #456;
+            font-size: 13px;
+        }
+
+        /* =========================
+           PROGRESS
+        ========================= */
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+
+            font-size: 13px;
+            color: #607d8b;
+
+            margin-bottom: 7px;
+        }
+
+        .progress-bg {
+            width: 100%;
+            height: 9px;
+
+            background: #e5e7eb;
+
+            border-radius: 20px;
+
+            overflow: hidden;
+
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+
+            width: 0%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #42a5f5,
+                    #7e57c2
+                );
+
+            transition: width 0.3s ease;
+        }
+
+        /* =========================
+           QUESTION
+        ========================= */
+
+        .question-box {
+            background: #f8f9fa;
+
+            border: 2px dashed #42a5f5;
+
+            border-radius: 16px;
+
+            padding: 20px 15px;
+
+            margin-bottom: 20px;
+
+            color: #263238;
+
+            font-size: 19px;
+
+            font-weight: 700;
+
+            line-height: 1.45;
+        }
+
+        /* =========================
+           OPTIONS
+        ========================= */
+
+        .options-grid {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 12px;
+        }
+
+        .option-btn {
+            border: none;
+
+            border-radius: 13px;
+
+            padding: 15px 10px;
+
+            min-height: 58px;
+
+            background: #42a5f5;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.15s,
+                opacity 0.15s;
+        }
+
+        .option-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        .option-btn.correct {
+            background: #2eaf5d;
+        }
+
+        .option-btn.wrong {
+            background: #e53935;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        /* =========================
+           RESULT MESSAGE
+        ========================= */
+
+        #result-msg {
+            min-height: 28px;
+
+            margin-top: 17px;
+
+            font-size: 17px;
+
+            font-weight: 700;
+        }
+
+        .correct-text {
+            color: #2eaf5d;
+        }
+
+        .wrong-text {
+            color: #e53935;
+        }
+
+        /* =========================
+           SCORE
+        ========================= */
+
+        .score-board {
+            margin-top: 15px;
+
+            padding: 12px;
+
+            background: #f5f7fa;
+
+            border-radius: 12px;
+
+            color: #546e7a;
+
+            font-size: 15px;
+        }
+
+        .score-number {
+            color: #3949ab;
+
+            font-size: 20px;
+
+            font-weight: 800;
+        }
+
+        /* =========================
+           ACCESS DENIED
+        ========================= */
+
+        .lock-icon {
+            font-size: 55px;
+            margin-bottom: 10px;
+        }
+
+        .denied-title {
+            color: #dc3545;
+            font-size: 25px;
+            margin: 5px 0 12px;
+        }
+
+        .denied-text {
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .denied-small {
+            color: #888;
+            font-size: 13px;
+            margin-top: 18px;
+        }
+
+        .retry-btn {
+            border: none;
+
+            background: #42a5f5;
+
+            color: white;
+
+            border-radius: 12px;
+
+            padding: 13px 25px;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            margin-top: 10px;
+        }
+
+        /* =========================
+           FINAL
+        ========================= */
+
+        .final-icon {
+            font-size: 65px;
+            margin-bottom: 5px;
+        }
+
+        .final-title {
+            color: #263238;
+            font-size: 27px;
+            margin: 5px 0 10px;
+        }
+
+        .final-score {
+            font-size: 45px;
+
+            font-weight: 800;
+
+            color: #3949ab;
+
+            margin: 15px 0;
+        }
+
+        .final-text {
+            color: #607d8b;
+
+            font-size: 16px;
+
+            line-height: 1.5;
+        }
+
+        .restart-btn {
+            width: 100%;
+
+            border: none;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #42a5f5,
+                    #7e57c2
+                );
+
+            color: white;
+
+            border-radius: 14px;
+
+            padding: 16px;
+
+            margin-top: 20px;
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        @media (max-width: 380px) {
+
+            body {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .question-box {
+                font-size: 17px;
+            }
+
+            .option-btn {
+                font-size: 14px;
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- =========================
+     LOADING
+========================= -->
+
+<div
+    class="card"
+    id="loading-card"
+>
+
+    <div class="loading-icon">
+        ⏳
+    </div>
+
+    <h2 class="loading-title">
+        Текширилмоқда...
+    </h2>
+
+    <p class="loading-text">
+        Telegram аккаунтингиз текширилмоқда.
+    </p>
+
+</div>
+
+
+<!-- =========================
+     ACCESS DENIED
+========================= -->
+
+<div
+    class="card hidden"
+    id="access-denied"
+>
+
+    <div class="lock-icon">
+        🔒
+    </div>
+
+    <h2 class="denied-title">
+        Кириш чекланган
+    </h2>
+
+    <p class="denied-text">
+        Бу ўйиндан фойдаланиш учун
+        махсус рухсат керак.
+    </p>
+
+    <p class="denied-small">
+        Рухсат Telegram бот орқали берилган
+        бўлиши керак.
+    </p>
+
+    <button
+        class="retry-btn"
+        onclick="checkAccessAgain()"
+    >
+        🔄 Қайта текшириш
+    </button>
+
+</div>
+
+
+<!-- =========================
+     GAME
+========================= -->
+
+<div
+    class="card hidden"
+    id="game-card"
+>
+
+    <div class="game-icon">
+        🎵
+    </div>
+
+    <h1>
+        Солфеджио 1-Синф
+    </h1>
+
+    <div class="subtitle">
+        Мусиқа дунёсига хуш келибсиз!
+    </div>
+
+    <div
+        class="user-box"
+        id="user-box"
+    >
+        👤 Telegram фойдаланувчиси
+    </div>
+
+
+    <div class="progress-info">
+
+        <span>
+            Савол
+        </span>
+
+        <span>
+            <b id="current-number">1</b>
+            /
+            <b id="total-number">5</b>
+        </span>
+
+    </div>
+
+
+    <div class="progress-bg">
+
+        <div
+            class="progress-bar"
+            id="progress-bar"
+        ></div>
+
+    </div>
+
+
+    <div
+        class="question-box"
+        id="question"
+    >
+        Савол юкланмоқда...
+    </div>
+
+
+    <div
+        class="options-grid"
+        id="options"
+    ></div>
+
+
+    <div id="result-msg"></div>
+
+
+    <div class="score-board">
+
+        ⭐ Балл:
+
+        <span
+            class="score-number"
+            id="score"
+        >
+            0
+        </span>
+
+        /
+        
+        <span id="total-score">
+            5
+        </span>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     FINAL RESULT
+========================= -->
+
+<div
+    class="card hidden"
+    id="final-card"
+>
+
+    <div class="final-icon">
+        🏆
+    </div>
+
+    <h2 class="final-title">
+        Табриклаймиз!
+    </h2>
+
+    <p>
+        Сиз тестни якунладингиз.
+    </p>
+
+    <div
+        class="final-score"
+        id="final-score"
+    >
+        0 / 5
+    </div>
+
+    <div
+        class="final-text"
+        id="final-text"
+    >
+        Натижангиз тайёр.
+    </div>
+
+    <button
+        class="restart-btn"
+        onclick="restartGame()"
+    >
+        🔄 Қайта ўйнаш
+    </button>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   TELEGRAM WEB APP
+===================================================== */
+
+const tg = window.Telegram.WebApp;
+
+tg.ready();
+tg.expand();
+
+
+/* =====================================================
+   TELEGRAM USER
+===================================================== */
+
+const user = tg.initDataUnsafe?.user || null;
+
+
+if (user) {
+
+    console.log(
+        "Telegram User ID:",
+        user.id
+    );
+
+    console.log(
+        "Telegram Name:",
+        user.first_name
+    );
+
+    document.getElementById(
+        "user-box"
+    ).innerText =
+        "👤 " +
+        (user.first_name || "Фойдаланувчи");
+
+}
+
+
+/* =====================================================
+   CLOUDflare LICENSE SERVER
+===================================================== */
+
+const LICENSE_SERVER =
+    "https://solfejio-license.charosss058.workers.dev/";
+
+
+/* =====================================================
+   ACCESS CHECK
+===================================================== */
+
+async function checkLicense() {
+
+    try {
+
+        /*
+         Telegram WebApp орқали очилган
+         ҳақиқий initData бўлиши керак.
+        */
+
+        if (!tg.initData) {
+
+            console.error(
+                "Telegram initData topilmadi"
+            );
+
+            return {
+                ok: false,
+                access: false,
+                error:
+                    "Telegram WebApp ma'lumotlari topilmadi"
+            };
+
+        }
+
+
+        const response =
+            await fetch(
+                LICENSE_SERVER,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        initData:
+                            tg.initData
+                    })
+                }
+            );
+
+
+        if (!response.ok) {
+
+            console.error(
+                "Server HTTP xatosi:",
+                response.status
+            );
+
+            return {
+                ok: false,
+                access: false
+            };
+
+        }
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "License server:",
+            result
+        );
+
+
+        return result;
+
+
+    } catch (error) {
+
+        console.error(
+            "License tekshirish xatosi:",
+            error
+        );
+
+        return {
+            ok: false,
+            access: false,
+            error: error.message
+        };
+
+    }
+
+}
+
+
+/* =====================================================
+   START ACCESS CHECK
+===================================================== */
+
+async function startAccessCheck() {
+
+    showOnly(
+        "loading-card"
+    );
+
+
+    const result =
+        await checkLicense();
+
+
+    console.log(
+        "ACCESS RESULT:",
+        result
+    );
+
+
+    if (
+        result &&
+        result.ok === true &&
+        result.access === true
+    ) {
+
+        showOnly(
+            "game-card"
+        );
+
+        startGame();
+
+    } else {
+
+        showOnly(
+            "access-denied"
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   RETRY
+===================================================== */
+
+async function checkAccessAgain() {
+
+    showOnly(
+        "loading-card"
+    );
+
+    await startAccessCheck();
+
+}
+
+
+/* =====================================================
+   SHOW ONLY ONE CARD
+===================================================== */
+
+function showOnly(id) {
+
+    const cards = [
+        "loading-card",
+        "game-card",
+        "access-denied",
+        "final-card"
+    ];
+
+
+    cards.forEach(
+        cardId => {
+
+            document
+                .getElementById(cardId)
+                .classList.add("hidden");
+
+        }
+    );
+
+
+    document
+        .getElementById(id)
+        .classList.remove("hidden");
+
+}
+
+
+/* =====================================================
+   QUESTIONS
+===================================================== */
+
+const questions = [
+
+    {
+        q:
+            "Скрипка калитида 1-чизиқда қайси нота жойлашган?",
+
+        options: [
+            "До",
+            "Ре",
+            "Ми",
+            "Фа"
+        ],
+
+        answer:
+            "Ми"
+    },
+
+
+    {
+        q:
+            "Биринчи қўшимча чизиқда қайси нота жойлашган?",
+
+        options: [
+            "До",
+            "Ми",
+            "Соль",
+            "Ля"
+        ],
+
+        answer:
+            "До"
+    },
+
+
+    {
+        q:
+            "«Forte» (Форте) атамаси нимани англатади?",
+
+        options: [
+            "Секин",
+            "Баланд / Жарангдор",
+            "Тез",
+            "Оҳиста"
+        ],
+
+        answer:
+            "Баланд / Жарангдор"
+    },
+
+
+    {
+        q:
+            "«Piano» (Пиано) мусиқий атамаси маъноси нима?",
+
+        options: [
+            "Паст / Оҳиста",
+            "Тез",
+            "Жуда баланд",
+            "Шошмасдан"
+        ],
+
+        answer:
+            "Паст / Оҳиста"
+    },
+
+
+    {
+        q:
+            "Мусиқада нечта асосий нота бор?",
+
+        options: [
+            "5 та",
+            "6 та",
+            "7 та",
+            "8 та"
+        ],
+
+        answer:
+            "7 та"
+    }
+
+];
+
+
+/* =====================================================
+   GAME VARIABLES
+===================================================== */
+
+let currentQuestion = 0;
+
+let score = 0;
+
+let answerLocked = false;
+
+
+document.getElementById(
+    "total-number"
+).innerText =
+    questions.length;
+
+
+document.getElementById(
+    "total-score"
+).innerText =
+    questions.length;
+
+
+/* =====================================================
+   START GAME
+===================================================== */
+
+function startGame() {
+
+    currentQuestion = 0;
+
+    score = 0;
+
+    answerLocked = false;
+
+
+    document.getElementById(
+        "score"
+    ).innerText = "0";
+
+
+    showQuestion();
+
+}
+
+
+/* =====================================================
+   SHOW QUESTION
+===================================================== */
+
+function showQuestion() {
+
+    answerLocked = false;
+
+
+    const question =
+        questions[currentQuestion];
+
+
+    document.getElementById(
+        "current-number"
+    ).innerText =
+        currentQuestion + 1;
+
+
+    document.getElementById(
+        "question"
+    ).innerText =
+        question.q;
+
+
+    document.getElementById(
+        "result-msg"
+    ).innerText =
+        "";
+
+
+    document.getElementById(
+        "result-msg"
+    ).className =
+        "";
+
+
+    const progress =
+        (
+            currentQuestion /
+            questions.length
+        ) * 100;
+
+
+    document.getElementById(
+        "progress-bar"
+    ).style.width =
+        progress + "%";
+
+
+    const options =
+        document.getElementById(
+            "options"
+        );
+
+
+    options.innerHTML = "";
+
+
+    question.options.forEach(
+        option => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.className =
+                "option-btn";
+
+
+            button.innerText =
+                option;
+
+
+            button.onclick =
+                () => checkAnswer(
+                    option,
+                    button
+                );
+
+
+            options.appendChild(
+                button
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   CHECK ANSWER
+===================================================== */
+
+function checkAnswer(
+    selectedAnswer,
+    clickedButton
+) {
+
+    if (answerLocked) {
+        return;
+    }
+
+
+    answerLocked = true;
+
+
+    const question =
+        questions[currentQuestion];
+
+
+    const buttons =
+        document.querySelectorAll(
+            ".option-btn"
+        );
+
+
+    buttons.forEach(
+        button => {
+
+            button.disabled =
+                true;
+
+        }
+    );
+
+
+    if (
+        selectedAnswer ===
+        question.answer
+    ) {
+
+        score++;
+
+
+        clickedButton.classList.add(
+            "correct"
+        );
+
+
+        document.getElementById(
+            "result-msg"
+        ).innerText =
+            "✅ Тўғри жавоб!";
+
+
+        document.getElementById(
+            "result-msg"
+        ).className =
+            "correct-text";
+
+
+        document.getElementById(
+            "score"
+        ).innerText =
+            score;
+
+
+        playCorrectSound();
+
+
+    } else {
+
+        clickedButton.classList.add(
+            "wrong"
+        );
+
+
+        buttons.forEach(
+            button => {
+
+                if (
+                    button.innerText ===
+                    question.answer
+                ) {
+
+                    button.classList.add(
+                        "correct"
+                    );
+
+                }
+
+            }
+        );
+
+
+        document.getElementById(
+            "result-msg"
+        ).innerText =
+            "❌ Нотўғри. Тўғри жавоб: " +
+            question.answer;
+
+
+        document.getElementById(
+            "result-msg"
+        ).className =
+            "wrong-text";
+
+
+        playWrongSound();
+
+    }
+
+
+    setTimeout(
+        nextQuestion,
+        1300
+    );
+
+}
+
+
+/* =====================================================
+   NEXT QUESTION
+===================================================== */
+
+function nextQuestion() {
+
+    currentQuestion++;
+
+
+    if (
+        currentQuestion >=
+        questions.length
+    ) {
+
+        finishGame();
+
+        return;
+
+    }
+
+
+    showQuestion();
+
+}
+
+
+/* =====================================================
+   FINISH GAME
+===================================================== */
+
+function finishGame() {
+
+    document.getElementById(
+        "progress-bar"
+    ).style.width =
+        "100%";
+
+
+    document.getElementById(
+        "final-score"
+    ).innerText =
+        score +
+        " / " +
+        questions.length;
+
+
+    let message = "";
+
+
+    const percentage =
+        (
+            score /
+            questions.length
+        ) * 100;
+
+
+    if (percentage === 100) {
+
+        message =
+            "🌟 Аъло! Барча саволларга тўғри жавоб бердингиз!";
+
+    } else if (percentage >= 80) {
+
+        message =
+            "👏 Жуда яхши натижа!";
+
+    } else if (percentage >= 60) {
+
+        message =
+            "👍 Яхши! Яна бир марта машқ қилиб кўринг.";
+
+    } else {
+
+        message =
+            "📚 Яна бир марта ўйнаб, билимингизни мустаҳкамланг.";
+
+    }
+
+
+    document.getElementById(
+        "final-text"
+    ).innerText =
+        message;
+
+
+    showOnly(
+        "final-card"
+    );
+
+
+    if (tg.HapticFeedback) {
+
+        tg.HapticFeedback
+            .notificationOccurred(
+                "success"
+            );
+
+    }
+
+}
+
+
+/* =====================================================
+   RESTART
+===================================================== */
+
+function restartGame() {
+
+    showOnly(
+        "game-card"
+    );
+
+    startGame();
+
+}
+
+
+/* =====================================================
+   CORRECT SOUND
+===================================================== */
+
+function playCorrectSound() {
+
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+
+        if (!AudioContext) {
+            return;
+        }
+
+
+        const audio =
+            new AudioContext();
+
+
+        const oscillator =
+            audio.createOscillator();
+
+
+        const gain =
+            audio.createGain();
+
+
+        oscillator.type =
+            "sine";
+
+
+        oscillator.frequency.setValueAtTime(
+            660,
+            audio.currentTime
+        );
+
+
+        oscillator.frequency.setValueAtTime(
+            880,
+            audio.currentTime + 0.12
+        );
+
+
+        gain.gain.setValueAtTime(
+            0.15,
+            audio.currentTime
+        );
+
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            audio.currentTime + 0.4
+        );
+
+
+        oscillator.connect(
+            gain
+        );
+
+
+        gain.connect(
+            audio.destination
+        );
+
+
+        oscillator.start();
+
+
+        oscillator.stop(
+            audio.currentTime + 0.4
+        );
+
+
+    } catch (error) {
+
+        console.log(
+            "Sound error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   WRONG SOUND
+===================================================== */
+
+function playWrongSound() {
+
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+
+        if (!AudioContext) {
+            return;
+        }
+
+
+        const audio =
+            new AudioContext();
+
+
+        const oscillator =
+            audio.createOscillator();
+
+
+        const gain =
+            audio.createGain();
+
+
+        oscillator.type =
+            "sine";
+
+
+        oscillator.frequency.setValueAtTime(
+            220,
+            audio.currentTime
+        );
+
+
+        oscillator.frequency.setValueAtTime(
+            150,
+            audio.currentTime + 0.15
+        );
+
+
+        gain.gain.setValueAtTime(
+            0.12,
+            audio.currentTime
+        );
+
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            audio.currentTime + 0.35
+        );
+
+
+        oscillator.connect(
+            gain
+        );
+
+
+        gain.connect(
+            audio.destination
+        );
+
+
+        oscillator.start();
+
+
+        oscillator.stop(
+            audio.currentTime + 0.35
+        );
+
+
+    } catch (error) {
+
+        console.log(
+            "Sound error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   START
+===================================================== */
+
+startAccessCheck();
+
+</script>
+
+</body>
+</html>

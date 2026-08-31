@@ -1,162 +1,4 @@
 
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Солфеджио 1-Синф</title>
-
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-        }
-
-        h1 {
-            color: #2c3e50;
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .question-box {
-            background: #f8f9fa;
-            border: 2px dashed #007bff;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .btn-opt {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-opt:hover {
-            background: #218838;
-            transform: scale(1.02);
-        }
-
-        .btn-opt:disabled {
-            opacity: 0.7;
-            cursor: default;
-            transform: none;
-        }
-
-        #result-msg {
-            margin-top: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            min-height: 25px;
-        }
-
-        .score-board {
-            font-size: 14px;
-            color: #555;
-            margin-top: 15px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 30px;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="card" id="loading-card">
-    <div class="loading">
-        <h2>⏳ Текширилмоқда...</h2>
-        <p>Илтимос, бироз кутиб туринг.</p>
-    </div>
-</div>
-
-<div class="card hidden" id="game-card">
-
-    <h1>🎵 Солфеджио: 1-Синф</h1>
-
-    <div class="subtitle">
-        Мусиқа дунёсига хуш келибсиз!
-    </div>
-
-    <div class="question-box" id="question">
-        Савол юкланмоқда...
-    </div>
-
-    <div class="options-grid" id="options"></div>
-
-    <div id="result-msg"></div>
-
-    <div class="score-board">
-        Балл:
-        <span id="score">0</span>
-        /
-        <span id="total">0</span>
-    </div>
-
-</div>
-
-<div class="card hidden" id="access-denied">
-
-    <h2 style="color:#dc3545;">
-        🔒 Кириш чекланган
-    </h2>
-
-    <p>
-        Бу ўйиндан фойдаланиш учун махсус рухсат керак.
-    </p>
-
-    <p style="font-size:14px;color:#777;">
-        Рухсат бот орқали берилган бўлиши керак.
-    </p>
-
-</div>
-
 <script>
 
 const tg = window.Telegram.WebApp;
@@ -164,6 +6,11 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 const user = tg.initDataUnsafe?.user;
+
+
+/* =========================================
+   TELEGRAM USER
+========================================= */
 
 if (user) {
     console.log("Telegram User ID:", user.id);
@@ -181,7 +28,7 @@ async function checkLicense() {
 
         if (!tg.initData) {
 
-            console.log("Telegram initData mavjud emas.");
+            console.error("Telegram initData mavjud emas.");
 
             return false;
         }
@@ -202,6 +49,7 @@ async function checkLicense() {
         );
 
         if (!response.ok) {
+
             console.error(
                 "License server xatosi:",
                 response.status
@@ -212,9 +60,12 @@ async function checkLicense() {
 
         const result = await response.json();
 
-        console.log("License:", result);
+        console.log("License server javobi:", result);
 
-        return result.ok === true && result.access === true;
+        return (
+            result.ok === true &&
+            result.access === true
+        );
 
     } catch (error) {
 
@@ -372,16 +223,11 @@ function playWrongSound() {
     const gainNode =
         audioContext.createGain();
 
-    oscillator.type = "sine";
-
-    oscillator.frequency.setValueAtTime(
-        330,
-        audioContext.currentTime
-    );
+    oscillator.type = "sawtooth";
 
     oscillator.frequency.setValueAtTime(
         220,
-        audioContext.currentTime + 0.15
+        audioContext.currentTime
     );
 
     gainNode.gain.setValueAtTime(
@@ -391,7 +237,7 @@ function playWrongSound() {
 
     gainNode.gain.exponentialRampToValueAtTime(
         0.001,
-        audioContext.currentTime + 0.35
+        audioContext.currentTime + 0.3
     );
 
     oscillator.connect(gainNode);
@@ -403,7 +249,7 @@ function playWrongSound() {
     oscillator.start();
 
     oscillator.stop(
-        audioContext.currentTime + 0.35
+        audioContext.currentTime + 0.3
     );
 }
 
@@ -414,58 +260,46 @@ function playWrongSound() {
 
 function loadQuestion() {
 
-    if (currentQ >= questions.length) {
-
-        finishGame();
-
-        return;
-    }
-
     answerLocked = false;
 
-    const qData =
+    const question =
         questions[currentQ];
 
-    document.getElementById("question")
-        .innerText =
-        (currentQ + 1) +
-        ". " +
-        qData.q;
+    document.getElementById("question").innerText =
+        question.q;
 
-    const optionsDiv =
+    const options =
         document.getElementById("options");
 
-    optionsDiv.innerHTML = "";
+    options.innerHTML = "";
 
-    const resultMsg =
-        document.getElementById("result-msg");
+    question.options.forEach(function(option) {
 
-    resultMsg.innerText = "";
+        const button =
+            document.createElement("button");
 
-    qData.options.forEach(
-        function(opt) {
+        button.className = "btn-opt";
 
-            const btn =
-                document.createElement("button");
+        button.innerText = option;
 
-            btn.innerText = opt;
+        button.onclick = function() {
 
-            btn.className =
-                "btn-opt";
+            checkAnswer(
+                option,
+                button
+            );
 
-            btn.onclick =
-                function() {
+        };
 
-                    checkAnswer(
-                        opt,
-                        qData.answer
-                    );
+        options.appendChild(button);
 
-                };
+    });
 
-            optionsDiv.appendChild(btn);
-        }
-    );
+    document.getElementById("result-msg").innerText =
+        "";
+
+    document.getElementById("score").innerText =
+        score;
 }
 
 
@@ -474,52 +308,69 @@ function loadQuestion() {
 ========================================= */
 
 function checkAnswer(
-    selected,
-    correct
+    selectedAnswer,
+    clickedButton
 ) {
 
     if (answerLocked) return;
 
-    const resultMsg =
-        document.getElementById(
-            "result-msg"
-        );
+    answerLocked = true;
 
-    if (selected === correct) {
+    const correctAnswer =
+        questions[currentQ].answer;
 
-        answerLocked = true;
+    const buttons =
+        document.querySelectorAll(".btn-opt");
 
-        playCorrectSound();
+    buttons.forEach(function(button) {
 
-        resultMsg.innerText =
-            "Тўғри! 👏";
+        button.disabled = true;
 
-        resultMsg.style.color =
-            "#28a745";
+    });
+
+
+    if (selectedAnswer === correctAnswer) {
 
         score++;
 
         document.getElementById(
-            "score"
-        ).innerText = score;
+            "result-msg"
+        ).innerText =
+            "✅ To'g'ri javob!";
 
-        currentQ++;
-
-        setTimeout(
-            loadQuestion,
-            1000
-        );
+        playCorrectSound();
 
     } else {
 
+        document.getElementById(
+            "result-msg"
+        ).innerText =
+            "❌ Noto'g'ri javob! To'g'ri javob: " +
+            correctAnswer;
+
         playWrongSound();
-
-        resultMsg.innerText =
-            "Нотўғри, қайта уриниб кўринг! ❌";
-
-        resultMsg.style.color =
-            "#dc3545";
     }
+
+
+    document.getElementById("score").innerText =
+        score;
+
+
+    setTimeout(function() {
+
+        currentQ++;
+
+        if (currentQ < questions.length) {
+
+            loadQuestion();
+
+        } else {
+
+            finishGame();
+
+        }
+
+    }, 1200);
 }
 
 
@@ -529,29 +380,29 @@ function checkAnswer(
 
 function finishGame() {
 
-    document.getElementById(
-        "game-card"
-    ).innerHTML = `
+    const questionBox =
+        document.getElementById("question");
 
-        <h2>🎉 Баракалла!</h2>
+    const options =
+        document.getElementById("options");
 
-        <p style="font-size:20px;">
-            Сиз синовдан муваффақиятли ўтдингиз!
-        </p>
+    const result =
+        document.getElementById("result-msg");
 
-        <h3>
-            Якуний балл:
-            ${score} / ${questions.length}
-        </h3>
+    questionBox.innerText =
+        "🎉 O'yin tugadi!";
 
-        <button
-            class="btn-opt"
-            style="width:100%;"
-            onclick="location.reload()"
-        >
-            Қайта ўйнаш 🔄
-        </button>
-    `;
+    options.innerHTML = "";
+
+    result.innerText =
+        "Siz " +
+        questions.length +
+        " ta savoldan " +
+        score +
+        " tasiga to'g'ri javob berdingiz.";
+
+    result.style.color = "#28a745";
+
 }
 
 
@@ -561,29 +412,57 @@ function finishGame() {
 
 async function startGame() {
 
+    const loadingCard =
+        document.getElementById(
+            "loading-card"
+        );
+
+    const gameCard =
+        document.getElementById(
+            "game-card"
+        );
+
+    const accessDenied =
+        document.getElementById(
+            "access-denied"
+        );
+
+
+    loadingCard.classList.remove("hidden");
+
+    gameCard.classList.add("hidden");
+
+    accessDenied.classList.add("hidden");
+
+
     const hasAccess =
         await checkLicense();
 
-    document.getElementById(
-        "loading-card"
-    ).classList.add("hidden");
 
+    if (hasAccess) {
 
-    if (!hasAccess) {
+        console.log(
+            "ACCESS BERILDI. O'YIN OCHILMOQDA..."
+        );
 
-        document.getElementById(
-            "access-denied"
-        ).classList.remove("hidden");
+        loadingCard.classList.add("hidden");
 
-        return;
+        gameCard.classList.remove("hidden");
+
+        loadQuestion();
+
+    } else {
+
+        console.log(
+            "ACCESS YO'Q. KIRISH CHEKLANGAN."
+        );
+
+        loadingCard.classList.add("hidden");
+
+        accessDenied.classList.remove("hidden");
+
     }
 
-
-    document.getElementById(
-        "game-card"
-    ).classList.remove("hidden");
-
-    loadQuestion();
 }
 
 
